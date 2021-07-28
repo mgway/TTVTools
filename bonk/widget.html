@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TTV Bonk Counter - Browser Source</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.css">
+    <style>
+        #counter {
+            font-size: 25px;
+            font-weight: bold;
+        }
+        
+    </style>
+    <script type="text/javascript">
+        var Base64={_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",encode:function(e){var t="";var n,r,i,s,o,u,a;var f=0;e=Base64._utf8_encode(e);while(f<e.length){n=e.charCodeAt(f++);r=e.charCodeAt(f++);i=e.charCodeAt(f++);s=n>>2;o=(n&3)<<4|r>>4;u=(r&15)<<2|i>>6;a=i&63;if(isNaN(r)){u=a=64}else if(isNaN(i)){a=64}t=t+this._keyStr.charAt(s)+this._keyStr.charAt(o)+this._keyStr.charAt(u)+this._keyStr.charAt(a)}return t},decode:function(e){var t="";var n,r,i;var s,o,u,a;var f=0;e=e.replace(/[^A-Za-z0-9\+\/\=]/g,"");while(f<e.length){s=this._keyStr.indexOf(e.charAt(f++));o=this._keyStr.indexOf(e.charAt(f++));u=this._keyStr.indexOf(e.charAt(f++));a=this._keyStr.indexOf(e.charAt(f++));n=s<<2|o>>4;r=(o&15)<<4|u>>2;i=(u&3)<<6|a;t=t+String.fromCharCode(n);if(u!=64){t=t+String.fromCharCode(r)}if(a!=64){t=t+String.fromCharCode(i)}}t=Base64._utf8_decode(t);return t},_utf8_encode:function(e){e=e.replace(/\r\n/g,"\n");var t="";for(var n=0;n<e.length;n++){var r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r)}else if(r>127&&r<2048){t+=String.fromCharCode(r>>6|192);t+=String.fromCharCode(r&63|128)}else{t+=String.fromCharCode(r>>12|224);t+=String.fromCharCode(r>>6&63|128);t+=String.fromCharCode(r&63|128)}}return t},_utf8_decode:function(e){var t="";var n=0;var r=c1=c2=0;while(n<e.length){r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r);n++}else if(r>191&&r<224){c2=e.charCodeAt(n+1);t+=String.fromCharCode((r&31)<<6|c2&63);n+=2}else{c2=e.charCodeAt(n+1);c3=e.charCodeAt(n+2);t+=String.fromCharCode((r&15)<<12|(c2&63)<<6|c3&63);n+=3}}return t}}
+
+        var lastEventId = "";
+
+        function getUrlVars() {
+            var vars = [], hash;
+            if (window.location.href.indexOf('#') == -1) {
+                console.log('No hash');
+                return [];
+            }
+
+            var hashes = window.location.href.slice(window.location.href.indexOf('#') + 1).split('&');
+            for (var i = 0; i < hashes.length; i++) {
+                hash = hashes[i].split('=');
+                if (hash[0] == "options") {
+                    console.log(Base64.decode(hash[1]));
+                    var decoded = Base64.decode(hash[1]).split('&');
+                    for (var j = 0; j < decoded.length; j++) {
+                        inner = decoded[j].split('=');
+                        vars[inner[0]] = inner[1].replace(/\0.*$/g,'');
+                    }
+                } else {
+                    vars[hash[0]] = decodeURIComponent(hash[1]);
+                }
+            }
+            return vars;
+        }
+
+        function getBansSinceTimestamp(timestamp, user_id, include_timeouts, headers) {
+            $.ajax({
+                url: "https://api.twitch.tv/helix/moderation/banned/events?first=50&broadcaster_id=" + user_id,
+                headers: headers
+            }).done(function(response) {
+                console.log(response)
+                var banCount = 0;
+                
+                for (var i = 0; i < response.data.length; i++) {
+                    var item = response.data[i];
+                    if (item.id === lastEventId) {
+                        // We've already seen this event, no need to recount previous bans
+                        break;
+                    }
+
+                    if (Date.parse(item.event_timestamp) > timestamp && item.event_type == "moderation.user.ban") {
+                        if (include_timeouts == "1" || item.event_data.expires_at == "") {
+                            banCount += 1;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+
+                if (response.data.length > 0) {
+                    lastEventId = response.data[0].id
+                }
+                
+                console.log("Updated! new count = " + banCount)
+
+                var lastCount = parseInt($("#counter").text())
+                $("#counter").text(banCount + lastCount)
+            });
+        }
+
+
+        function getCurrentStreamDetails(user_id, include_timeouts, headers) {
+            $.ajax({
+                url: "https://api.twitch.tv/helix/streams?user_id=" + user_id,
+                headers: headers
+            }).done(function( response ) {
+                console.log(response)
+                if(response.data.length == 1) {
+                    var startTimestamp = Date.parse(response.data[0].started_at);
+
+                    getBansSinceTimestamp(startTimestamp, user_id, include_timeouts, headers)
+                } else {
+                    console.warn("Stream not live")
+                    $("#counter").text("0")
+                }
+            });
+        }
+
+        $(document).ready(function () {
+            var options = getUrlVars();
+            console.log(options);
+
+            var headers = {
+                "Authorization": "Bearer " + options['token'],
+                "Client-Id": "CLIENT_ID"
+            }
+            $.ajax({
+                url: "https://id.twitch.tv/oauth2/validate",
+                headers: {
+                    "Authorization": "OAuth " + options['token']
+                }
+            }).done(function( data ) {
+                console.log(data)
+                
+                if (options['reset'] === 'session') {
+                    getCurrentStreamDetails(data.user_id, options['includeTimeout'], headers);
+                    setInterval(getCurrentStreamDetails, 60000, data.user_id, options['includeTimeout'], headers)
+                } else if (options['reset'] === 'midnight') {
+                    var midnight = new Date();
+                    midnight.setHours(0, 0, 0);
+                    getBansSinceTimestamp(midnight, data.user_id, options['includeTimeout'], headers)
+
+                    setInterval(function() {
+                        var midnight = new Date();
+                        midnight.setHours(0, 0, 0);
+                        getBansSinceTimestamp(midnight, data.user_id, options['includeTimeout'], headers)
+                    }, 60000)
+
+                } else {
+                    var startDate = new Date();
+                    getBansSinceTimestamp(startDate, data.user_id, options['includeTimeout'], headers)
+                    setInterval(getBansSinceTimestamp, 60000, startDate, data.user_id, options['includeTimeout'], headers)
+                }
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <span id="counter">0</span>
+</body>
+
+</html>

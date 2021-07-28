@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TTV Bonk Counter - Config</title>
+    <link rel="icon" href="favicon.png">
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.css">
+    <style>
+        body {
+            background-color: #333;
+            color: #DDD;
+        }
+        
+        option {
+            background-color: #333;
+        }
+
+        code {
+            color: #333;
+        }
+        
+        input, select {
+            color: #DDD;
+        }
+
+        .container {
+            padding-top: 50px;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background-color: black;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+
+            /* Position the tooltip */
+            position: absolute;
+            z-index: 1;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+        }
+
+    </style>
+    <script type="text/javascript">
+        var Base64={_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",encode:function(e){var t="";var n,r,i,s,o,u,a;var f=0;e=Base64._utf8_encode(e);while(f<e.length){n=e.charCodeAt(f++);r=e.charCodeAt(f++);i=e.charCodeAt(f++);s=n>>2;o=(n&3)<<4|r>>4;u=(r&15)<<2|i>>6;a=i&63;if(isNaN(r)){u=a=64}else if(isNaN(i)){a=64}t=t+this._keyStr.charAt(s)+this._keyStr.charAt(o)+this._keyStr.charAt(u)+this._keyStr.charAt(a)}return t},decode:function(e){var t="";var n,r,i;var s,o,u,a;var f=0;e=e.replace(/[^A-Za-z0-9\+\/\=]/g,"");while(f<e.length){s=this._keyStr.indexOf(e.charAt(f++));o=this._keyStr.indexOf(e.charAt(f++));u=this._keyStr.indexOf(e.charAt(f++));a=this._keyStr.indexOf(e.charAt(f++));n=s<<2|o>>4;r=(o&15)<<4|u>>2;i=(u&3)<<6|a;t=t+String.fromCharCode(n);if(u!=64){t=t+String.fromCharCode(r)}if(a!=64){t=t+String.fromCharCode(i)}}t=Base64._utf8_decode(t);return t},_utf8_encode:function(e){e=e.replace(/\r\n/g,"\n");var t="";for(var n=0;n<e.length;n++){var r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r)}else if(r>127&&r<2048){t+=String.fromCharCode(r>>6|192);t+=String.fromCharCode(r&63|128)}else{t+=String.fromCharCode(r>>12|224);t+=String.fromCharCode(r>>6&63|128);t+=String.fromCharCode(r&63|128)}}return t},_utf8_decode:function(e){var t="";var n=0;var r=c1=c2=0;while(n<e.length){r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r);n++}else if(r>191&&r<224){c2=e.charCodeAt(n+1);t+=String.fromCharCode((r&31)<<6|c2&63);n+=2}else{c2=e.charCodeAt(n+1);c3=e.charCodeAt(n+2);t+=String.fromCharCode((r&15)<<12|(c2&63)<<6|c3&63);n+=3}}return t}}
+
+        function getUrlVars() {
+            var vars = [], hash;
+            if (window.location.href.indexOf('#') == -1) {
+                console.log('No hash');
+                alert("Twitch login was not successful, please try again");
+                return [];
+            }
+
+            var hashes = window.location.href.slice(window.location.href.indexOf('#') + 1).split('&');
+            for (var i = 0; i < hashes.length; i++) {
+                hash = hashes[i].split('=');
+                vars[hash[0]] = decodeURIComponent(hash[1]);
+            }
+            return vars;
+        }
+
+        $(document).ready(function () {
+            var authVars = getUrlVars();
+            if('access_token' in authVars) {
+                var token = authVars['access_token'];
+
+                $("#key").val(token);
+                console.log("ready!");
+
+                $("#generate").click(function(event) {
+                    event.preventDefault();
+
+                    var includeTimeout = $("#includeTimeout").prop('checked') ? "1" : "0";
+                    var configString = "token=" + $("#key").val() + "&reset=" + $("#resetTrigger").val() + "&includeTimeout=" + includeTimeout;
+
+                    var encodedOptions = Base64.encode(configString);
+                    $("#browserSourceUrl").val("BASE_URL/widget.html#options=" + encodedOptions);
+                });
+
+                $("#copyUrl").click(function(event) {
+                    event.preventDefault();
+
+                    var copyText = document.querySelector("#browserSourceUrl")
+                    copyText.select();
+                    document.execCommand("copy");
+
+                    $(".tooltiptext").text("Copied!");
+                    setTimeout(function() {
+                        $(".tooltiptext").text("Copy to Clipboard");
+                    }, 2000)
+                    
+                })
+            }
+        });
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="column column-50 column-offset-25">
+                <h1 style="text-align: center;">TTV Bonk Counter</h1>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="column column-50 column-offset-25">
+                <form>
+                    <fieldset>
+                        <label for="key">Token</label>
+                        <input type="text" placeholder="Token" id="key" readonly="1">
+                        <label for="resetTrigger">Reset counter at</label>
+                        <select id="resetTrigger">
+                            <option value="session">Broadcast start</option>
+                            <option value="midnight">Midnight (local timezone)</option>
+                            <option value="manual">Manually</option>
+                        </select>
+                        
+                        <div class="float-left">
+                            <input type="checkbox" id="includeTimeout">
+                            <label class="label-inline" for="includeTimeout">Include timeouts in count</label>
+                        </div>
+                        <div class="clearfix" style="padding: 25px;"></div>
+                        <input class="button-primary" type="submit" id="generate" value="Generate Browser Source URL">
+                    </fieldset>
+                </form>
+
+                
+            </div>
+        </div>
+        <div class="row">
+            <div class="column column-50 column-offset-25">
+                <input type="text" placeholder="Browser Source URL will appear here" id="browserSourceUrl" readonly="1">
+            </div>
+            <div class="column column-10 tooltip">
+                <a href="" id="copyUrl">
+                    <img style="margin-top:10px;" src="copy.png" height="24" width="24" alt="Copy to clipboard" />
+                </a>
+                <span class="tooltiptext">Copy to Clipboard</span>
+            </div>
+        </div>
+
+        <div class="row" style="padding-top: 50px;">
+            <div class="column column-50 column-offset-25">
+                <h2>Instructions</h2>
+                <ol>
+                    <li>If Twitch login was successful, the Token field should have a read-only value</li>
+                    <li>Configure Reset Counter At and Include Timeouts settings</li>
+                    <li>Click Generate Browser Source URL</li>
+                    <li>Copy the Browser Source URL to clipboard</li>
+                    <li>In OBS, add a new "Browser" source</li>
+                    <li>Paste the URL in the URL field</li>
+                    <li>(optional) Set Width to 100 and Height to 50</li>
+                    <li>Change the look of the counter with the Custom CSS property</li>
+                    <ul>
+                        <li>Do not modify any existing Custom CSS</li>
+                        <li>The counter is in a span with ID "counter"</li>
+                        <li>For example, the following code changes the text to red and font size to 25px:
+                            <pre><code>#counter { color: red; font-size: 25px }</code></pre>
+                        </li>
+                    </ul>
+                    <li>If you specified "Manual" reset, click "Refresh Cache of Current Page" when you want to reset the counter</li>
+                    <li>Click OK</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="row" style="padding-top: 50px;">
+            <div class="column column-50 column-offset-25">
+                <h2>Limitations</h2>
+                <ul>
+                    <li>This counter tracks total bans, not unique bans, so repeatedly banning and unbanning the same user will inflate the count</li>
+                    <li>Only the first 100 bans per minute are counted, good luck exceeding that limit</li>
+                    <li>Twitch API token refresh doesn't work so you'll need to login with Twitch and configure the widget every 60 days</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
